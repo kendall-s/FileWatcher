@@ -1,0 +1,26 @@
+{
+    "voyage": "in2021_v04", 
+    "watching": [
+        {
+            "id": 1,
+            "frequency": "10",
+            "source_host": "\\\\Hydrochem-do\\O2",
+            "source": "?voyage/O2LST/",
+            "dest_host": "\\\\files.investigator.csiro.au\\hydrochemdata",
+            "dest": "?voyage/hypro/Oxygen/",
+            "file_type": ".LST",
+            "name_contains": "?voyageoxy",
+            "source_auth": {
+                "domain": "investigator",
+                "username": "hydrochem",
+                "password": "hydrochem"
+            },
+            "dest_auth": {
+                "domain": "investigator",
+                "username": "hydrochem",
+                "password": "hydrochem"
+            }
+        }
+    ]
+}
+

@@ -1,0 +1,26 @@
+{
+    "voyage": "in2021_v04", 
+    "watching": [
+        {
+            "id": 1,
+            "frequency": "10",
+            "source_host": "\\\\processing-pc\\oxygen-data",
+            "source": "?voyage/oxygen/",
+            "dest_host": "\\\\files.data",
+            "dest": "?voyage/processed-data/Oxygen/",
+            "file_type": ".lst",
+            "name_contains": "?voyageoxy",
+            "source_auth": {
+                "domain": "internal",
+                "username": "procesing",
+                "password": "processing_pwd"
+            },
+            "dest_auth": {
+                "domain": "internal",
+                "username": "general",
+                "password": "general_pwd"
+            }
+        }
+    ]
+}
+
