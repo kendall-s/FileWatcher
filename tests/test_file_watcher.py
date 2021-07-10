@@ -28,5 +28,5 @@ def test_set_live_output_and_job_finish(file_watcher):
         Include the on job finish because it needs ref to the live console.
         """
         file_watcher.active_job_ids = [1, 2]
-        file_watcher.on_job_finish(1)
+        file_watcher.on_job_finish(1, 0)
         assert file_watcher.active_job_ids == [2]

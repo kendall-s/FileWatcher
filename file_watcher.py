@@ -1,3 +1,4 @@
+import os
 from util import *
 # Use the time it default timer as it is very spot on and accounts for CPU time
 from timeit import default_timer as accurate_timer
@@ -46,6 +47,7 @@ class FileWatcher():
         self.job_threads = []
         self.active_job_ids = []   
         self.last_active = {}
+        self.files_copied = {}
 
         self.start_up()
 
@@ -58,6 +60,7 @@ class FileWatcher():
         for i, job in enumerate(self.parameters_json['watching']):
             self.timers.append({'id': job['id'], 'time': int(job['frequency'])})
             self.last_active[job['id']] = 'Not been active yet...'
+            self.files_copied[job['id']] = 0
 
             source_fmt = fmt_str_with_voyage_name(job['source'], self.parameters_json['voyage'])
             dest_fmt = fmt_str_with_voyage_name(job['dest'], self.parameters_json['voyage'])
@@ -73,7 +76,7 @@ class FileWatcher():
         """
         
         table = Table(
-            "Job ID", "Time Remaining", "State", "Last Active", 
+            "Job ID", "From", "To", "Time Remaining", "State", "Last Active", "Files Copied",
             show_header=True, header_style="bold orange1", title="Jobs Ongoing"
         )
         table_centered = Align.center(table)
@@ -83,8 +86,14 @@ class FileWatcher():
                 active_state = 'Active'
             else:
                 active_state = 'Waiting'
-            table.add_row(f"{timer['id']}", f"{timer['time']}", f'{active_state}', f"{self.last_active[timer['id']]}")
-        
+            table.add_row(f"{timer['id']}",
+                            f"{self.parameters_json['watching'][timer['id']-1]['source']}",
+                            f"{self.parameters_json['watching'][timer['id']-1]['dest']}",  
+                            f"{timer['time']}", 
+                            f'{active_state}', 
+                            f"{self.last_active[timer['id']]}",
+                            f"{self.files_copied[timer['id']]}")
+
         return table_centered
 
     def timer_countdown(self):
@@ -109,7 +118,6 @@ class FileWatcher():
                 # Create the new job and add it to the active jobs list
                 self.active_job_ids.append(job_id)
                 self.timers[i]['time'] = int(self.parameters_json['watching'][i]['frequency'])
-                self.last_active[i] = strftime("%Y-%m-%d %H:%M:%S", localtime())
                 new_job = FileCopyJob(self, file_params_obj, self.live_output)                
                 self.job_threads.append(new_job)
 
@@ -117,9 +125,11 @@ class FileWatcher():
 
         self.start_time = accurate_timer()
 
-    def on_job_finish(self, job_id):
+    def on_job_finish(self, job_id, num_files_copied):
         self.live_output.console.print(f'Removing job {job_id} from the active list \n')
         self.active_job_ids.remove(job_id)
+        self.files_copied[job_id] = num_files_copied
+        self.last_active[job_id] = strftime("%Y-%m-%d %H:%M:%S", localtime())
 
 class FileCopyJob(Thread):
 
@@ -160,7 +170,7 @@ class FileCopyJob(Thread):
         self.source_folder_path = self.source_host + '\\' + self.source
         self.dest_folder_path = self.dest_host + '\\' + self.dest
 
-        self.live_output.console.rule(f'Job ID: {self.id} | {self.source} -> {self.dest}')
+        #self.live_output.console.rule(f'Job ID: {self.id} | {self.source} -> {self.dest}')
         #self.live_output.console.log(f'\nJob thread for ID: {self.id} has been created. Assessing files from {self.source} for copying to {self.dest}')
 
     def run(self):
@@ -177,26 +187,44 @@ class FileCopyJob(Thread):
             matching_source_files = check_for_files(self.source_folder_path, self.name_contains, self.file_type)
             matching_dest_files = check_for_files(self.dest_folder_path, self.name_contains, self.file_type)
 
-            # Check to see if the list lengths are different, quickest way to check for any changes
-            if len(matching_source_files) > len(matching_dest_files):
-                # If difference, lets get the file name of the difference
-                new_files = list(set(matching_source_files) - set(matching_dest_files))
-                if len(new_files) > 0:
-                    #print(f'Source files: {matching_source_files}')
-                    #print(f'Dest files: {matching_dest_files}')
-                    print(f'🆕 New files found: {new_files}')
+            """
+            Changing the logic for checking for new files. First attempt was focused on speed, but the correct approach 
+            would be to take your time and check every file, looking at mod times to see if a file has been updated.
+            Make sure though, that the source modified time is still less than the latest copy of the processing pc.
+            """
+            # Lets get the files which are in the source directory but not in the destination directory
+            # This type of comparator is asymmetric
+            files_to_copy = list(set(matching_source_files) - set(matching_dest_files))
+            
+            # Now lets check the files which exist in both directories and make sure the modified times are the same
+            matching_files = set(matching_source_files) & set(matching_dest_files)
+            for file in matching_files:
+                source_mod_time = os.path.getmtime(self.source_folder_path + '\\' + file)
+                dest_mod_time = os.path.getmtime(self.dest_folder_path + '\\' + file)
 
-                self.iterate_copy_files(new_files)
-               
+                if source_mod_time > dest_mod_time:
+                    files_to_copy.append(file)
+                    
+
+            if len(files_to_copy) > 0:
+                self.iterate_copy_files(files_to_copy)
+                
+                # Lets print out a summary of what we did
+                print('\n')
+                self.live_output.console.rule(f'Job ID: {self.id} | {self.source} -> {self.dest}', style="bold green")
+                print('\n')
+                print(f'🆕 New files found: {files_to_copy}')
                 print(f'✅ Successfully completed watching job {self.id}. {self.files_copied} file(s) were copied.')
+                self.live_output.console.rule('.')
+                print('\n')
 
             else:
-                print('✅ Source and destination directories are the same. Not copying files this time.')
+                print(f'Job ID: {self.id}. Source and destination directories are the same. Not copying files this time.')
         else:
-            self.rich_console.log('❌ No connection to the source or destination host could be made, are they online?')
+            self.live_output.console.log('❌ No connection to the source or destination host could be made, are they online?')
 
         # When the job thread has completed its running, signal the file master to remove it from the active list 
-        self.parent.on_job_finish(self.id)
+        self.parent.on_job_finish(self.id, len(files_to_copy))
 
 
     def generate_connection(self, host, domain, username, password):
@@ -211,7 +239,7 @@ class FileCopyJob(Thread):
         if source_connection['outcome'] == 'error':
             return {'outcome': 'error'}
 
-        print(f'Connection to {host} established')
+        # print(f'Connection to {host} established')
         return {'outcome': 'success'}
 
     def iterate_copy_files(self, new_files):
@@ -227,7 +255,7 @@ class FileCopyJob(Thread):
 
                 if verify_checksums(source_checksum, dest_checksum):
                     self.files_copied += 1
-                    print(f'Checksum confirmed between source and dest file: {file}')
+                    #print(f'Checksum confirmed between source and dest file: {file}')
                 else:
                     print(f'ERROR: checksum does not match for file: {file}')
 
