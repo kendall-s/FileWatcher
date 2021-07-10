@@ -30,5 +30,3 @@ def test_set_live_output_and_job_finish(file_watcher):
         file_watcher.active_job_ids = [1, 2]
         file_watcher.on_job_finish(1)
         assert file_watcher.active_job_ids == [2]
-
-def 
