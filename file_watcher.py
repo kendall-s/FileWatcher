@@ -11,7 +11,6 @@ from rich.align import Align
 from rich.console import Console
 from rich.live import Live
 
-
 class FileWatcher():
 
     """
@@ -24,16 +23,20 @@ class FileWatcher():
     
     """
 
-    def __init__(self, parameters_path):
+    def __init__(self, parameters_path=None):
         
+        if parameters_path:
+            self.parameters_path = parameters_path
+        else:
+            self.parameters_path = 'parameters.json'
+
         self.running = True
         self.live_output = None
         self.rich_console = Console()
 
         self.printing_time = 0
 
-        self.parameters_path = parameters_path
-
+        
         self.parameters_json = read_in_parameters(parameters_path)
 
         self.start_time = accurate_timer()
@@ -81,7 +84,7 @@ class FileWatcher():
             else:
                 active_state = 'Waiting'
             table.add_row(f"{timer['id']}", f"{timer['time']}", f'{active_state}', f"{self.last_active[timer['id']]}")
-   
+        
         return table_centered
 
     def timer_countdown(self):
@@ -230,7 +233,7 @@ class FileCopyJob(Thread):
 
 
 if __name__ == '__main__':
-    app = FileWatcher('parameters.json')
+    app = FileWatcher(parameters_path='parameters.json')
     with Live(app.print_timers_table(), refresh_per_second=2) as live:
         app.set_live_output(live)
         while app.running:

@@ -1,24 +1,24 @@
 {
-    "voyage": "in2021_v04", 
+    "voyage": "tester", 
     "watching": [
         {
             "id": 1,
             "frequency": "10",
-            "source_host": "\\\\Hydrochem-do\\O2",
-            "source": "?voyage/O2LST/",
-            "dest_host": "\\\\files.investigator.csiro.au\\hydrochemdata",
-            "dest": "?voyage/hypro/Oxygen/",
-            "file_type": ".LST",
+            "source_host": "\\\\processing-pc\\oxygen-data",
+            "source": "?voyage/oxygen/",
+            "dest_host": "\\\\files.data",
+            "dest": "?voyage/processed-data/Oxygen/",
+            "file_type": ".lst",
             "name_contains": "?voyageoxy",
             "source_auth": {
-                "domain": "investigator",
-                "username": "hydrochem",
-                "password": "hydrochem"
+                "domain": "internal",
+                "username": "procesing",
+                "password": "processing_pwd"
             },
             "dest_auth": {
-                "domain": "investigator",
-                "username": "hydrochem",
-                "password": "hydrochem"
+                "domain": "internal",
+                "username": "general",
+                "password": "general_pwd"
             }
         }
     ]
