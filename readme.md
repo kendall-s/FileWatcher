@@ -1,6 +1,6 @@
 # File Watcher
 
-![Testing Suite](https://github.com/kendall-s/file-watcher/actions/workflows/run_tests.yml/badge.svg)
+![Testing Suite](https://github.com/kendall-s/FileWatcher/actions/workflows/run_tests.yml/badge.svg)
 
 
 #### Terminal application for pinging locations and copying matched files if they're not in already in the destination folder 📂
