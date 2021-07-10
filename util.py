@@ -50,7 +50,7 @@ def check_for_files(path, name_contains, file_type):
     """
     # Get files in path
     files = [f for f in listdir(path) if isfile(join(path, f))]
-    files_with_ext = [f for f in files  if os.path.splitext(f)[1] == file_type]
+    files_with_ext = [f for f in files  if os.path.splitext(f)[1].lower() == file_type.lower()]
     files_with_name = [f for f in files_with_ext if name_contains in f]
 
     return files_with_name
