@@ -126,10 +126,11 @@ class FileWatcher():
         self.start_time = accurate_timer()
 
     def on_job_finish(self, job_id, num_files_copied):
-        self.live_output.console.print(f'Removing job {job_id} from the active list \n')
+        #self.live_output.console.print(f'Removing job {job_id} from the active list \n')
         self.active_job_ids.remove(job_id)
-        self.files_copied[job_id] = num_files_copied
-        self.last_active[job_id] = strftime("%Y-%m-%d %H:%M:%S", localtime())
+        if num_files_copied > 0:
+            self.files_copied[job_id] = num_files_copied
+            self.last_active[job_id] = strftime("%Y-%m-%d %H:%M:%S", localtime())
 
 class FileCopyJob(Thread):
 
@@ -215,6 +216,7 @@ class FileCopyJob(Thread):
                 print('\n')
                 print(f'🆕 New files found: {files_to_copy}')
                 print(f'✅ Successfully completed watching job {self.id}. {self.files_copied} file(s) were copied.')
+                print('\n')
                 self.live_output.console.rule('.')
                 print('\n')
 
